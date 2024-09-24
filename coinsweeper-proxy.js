@@ -10,7 +10,7 @@ class ByBit {
         this.headers = {
             "Accept": "application/json, text/plain, */*",
             "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "vi-VN,vi;q=0.9,fr-FR;q=0.8,fr;q=0.7,en-US;q=0.6,en;q=0.5",
+            "Accept-Language": "en-US;q=0.6,en;q=0.5",
             "Content-Type": "application/json",
             "Origin": "https://bybitcoinsweeper.com",
             "Referer": "https://bybitcoinsweeper.com/",
@@ -58,7 +58,7 @@ class ByBit {
         for (let i = seconds; i > 0; i--) {
             const timestamp = new Date().toLocaleTimeString();
             readline.cursorTo(process.stdout, 0);
-            process.stdout.write(`[${timestamp}] [*] Chờ ${i} giây để tiếp tục...`);
+            process.stdout.write(`[${timestamp}] [*] Waiting ${i} seconds to continue...`);
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
         readline.cursorTo(process.stdout, 0);
@@ -101,7 +101,7 @@ class ByBit {
                 const gametime = Math.floor(Math.random() * (300 - 90 + 1)) + 90;
                 const score = Math.floor(Math.random() * (900 - 600 + 1)) + 600;
                 
-                this.log(`Bắt đầu game ${i + 1}/3. Thời gian chơi: ${gametime} giây`, 'info');
+                this.log(`Starting game ${i + 1}/3. Playtime: ${gametime} seconds`, 'info');
                 await this.wait(gametime);
                 
                 const game_data = {
@@ -116,17 +116,17 @@ class ByBit {
                 
                 if (res.status === 200) {
                     this.info.score += score;
-                    this.log(`Chơi Game Thành Công: nhận được ${score} điểm | Tổng : ${this.info.score}`, 'custom');
+                    this.log(`Game Played Successfully: received ${score} points | Total: ${this.info.score}`, 'custom');
                 } else if (res.status === 401) {
-                    this.log('Token hết hạn, cần đăng nhập lại', 'warning');
+                    this.log('Token expired, need to log in again', 'warning');
                     return false;
                 } else {
-                    this.log(`Đã Xảy Ra Lỗi Với Mã ${res.status}`, 'error');
+                    this.log(`An Error Occurred With Code ${res.status}`, 'error');
                 }
                 
                 await this.wait(5);
             } catch (error) {
-                this.log('Đã Yêu Cầu Quá Nhiều Lần Vui Lòng Chờ', 'warning');
+                this.log('Too Many Requests, Please Wait', 'warning');
                 await this.wait(60);
             }
         }
@@ -140,14 +140,20 @@ class ByBit {
             if (response.status === 200) {
                 return response.data.ip;
             } else {
-                throw new Error(`Không thể kiểm tra IP của proxy. Status code: ${response.status}`);
+                throw new Error(`Cannot check proxy IP. Status code: ${response.status}`);
             }
         } catch (error) {
-            throw new Error(`Error khi kiểm tra IP của proxy: ${error.message}`);
+            throw new Error(`Error checking proxy IP: ${error.message}`);
         }
     }
 
     async main() {
+        const xTitle = "\n\x1b[1mBybit coinsweeper\x1b[0m";
+        const additionalText = "\nIf you use it, don't be afraid.\nIf you're afraid, don't use it.\nDo With Your Own Risk!\n";
+        
+        console.log(xTitle.green);
+        console.log(additionalText.yellow);
+
         const dataFile = path.join(__dirname, 'data.txt');
         const data = fs.readFileSync(dataFile, 'utf8')
             .replace(/\r/g, '')
@@ -165,22 +171,22 @@ class ByBit {
                 try {
                     proxyIP = await this.checkProxyIP(proxy);
                 } catch (error) {
-                    this.log(`Lỗi khi kiểm tra IP của proxy: ${error.message}`, 'error');
+                    this.log(`Error checking proxy IP: ${error.message}`, 'error');
                     continue;
                 }
 
-                console.log(`========== Tài khoản ${i + 1} | ${userData.first_name.green} | ip: ${proxyIP} ==========`);
-                
-                this.log(`Đang đăng nhập tài khoản ${userData.id}...`, 'info');
+                console.log(`========== Account ${i + 1} | ${userData.first_name.green} | ip: ${proxyIP} ==========`);
+
+                this.log(`Logging into account ${userData.id}...`, 'info');
                 const loginResult = await this.login(userData, proxyAgent);
                 if (loginResult.success) {
-                    this.log('Đăng nhập thành công!', 'success');
+                    this.log('Login successful!', 'success');
                     const gameResult = await this.score(proxyAgent);
                     if (!gameResult) {
-                        this.log('Cần đăng nhập lại, chuyển sang tài khoản tiếp theo', 'warning');
+                        this.log('Need to log in again, moving to the next account', 'warning');
                     }
                 } else {
-                    this.log(`Đăng nhập không thành công! ${loginResult.error}`, 'error');
+                    this.log(`Login failed! ${loginResult.error}`, 'error');
                 }
 
                 if (i < data.length - 1) {
